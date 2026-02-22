@@ -1,4 +1,4 @@
-#include "sandbox_img_gen/shapes.hpp"
+#include <sandbox_img_gen/shapes.hpp>
 
 #include <Magick++.h>
 
