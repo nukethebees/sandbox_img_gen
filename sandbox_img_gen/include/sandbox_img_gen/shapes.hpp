@@ -5,5 +5,5 @@
 #include <cstddef>
 
 namespace sbx {
-auto draw_circle(Dimension width, Dimension height) -> Magick::DrawableCircle;
+auto draw_circle(Dimension width, Dimension height, double proportion) -> Magick::DrawableCircle;
 }
