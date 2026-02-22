@@ -59,41 +59,36 @@ static void
 
     image.write(std::format("die_{}.png", w_div * h_div));
 }
-static void draw_line_die(std::size_t const div,
-                          DiagonalLineDirection const direction,
-                          double const proportion) {
+static void draw_x_die(std::size_t const back, std::size_t const fwd, double const proportion) {
     constexpr std::size_t width{1024uz};
     constexpr std::size_t height{width};
     auto image{blank_image(width, height)};
 
     sbx::CircleDrawer drawer{width, height};
 
-    auto const circles{drawer.draw_centred_diagonal_line_grid(div, direction, proportion)};
-    for (auto const& c : circles) {
-        image.draw(c);
+    auto draw_line{[&image, &drawer](std::size_t const n,
+                                     DiagonalLineDirection const direction,
+                                     double const proportion) -> void {
+        if (!n) {
+            return;
+        }
+
+        auto const circles{drawer.draw_centred_diagonal_line_grid(n, direction, proportion)};
+        for (auto const& c : circles) {
+            image.draw(c);
+        }
+    }};
+
+    draw_line(fwd, DiagonalLineDirection::forward, proportion);
+    draw_line(back, DiagonalLineDirection::backward, proportion);
+
+    auto num{fwd + back};
+    if ((fwd % 2 != 0) && (back % 2 != 0)) {
+        // Middle dot overlaps
+        num--;
     }
 
-    image.write(std::format("die_{}.png", div));
-}
-static void draw_die_5(double const proportion) {
-    constexpr std::size_t width{1024uz};
-    constexpr std::size_t height{width};
-    auto image{blank_image(width, height)};
-
-    sbx::CircleDrawer drawer{width, height};
-
-    auto const circles_fwd{
-        drawer.draw_centred_diagonal_line_grid(3u, DiagonalLineDirection::forward, proportion)};
-    auto const circles_backward{
-        drawer.draw_centred_diagonal_line_grid(3u, DiagonalLineDirection::backward, proportion)};
-    for (auto const& c : circles_fwd) {
-        image.draw(c);
-    }
-    for (auto const& c : circles_backward) {
-        image.draw(c);
-    }
-
-    image.write("die_5.png");
+    image.write(std::format("die_{}.png", num));
 }
 }
 
@@ -109,10 +104,10 @@ int main(int /*argc*/, char** argv) {
     constexpr double prop{0.05};
 
     draw_rect_die(1, 1, prop);
-    draw_line_die(2u, DiagonalLineDirection::backward, prop);
-    draw_line_die(3u, DiagonalLineDirection::forward, prop);
+    draw_x_die(0u, 2u, prop);
+    draw_x_die(3u, 0u, prop);
     draw_rect_die(2, 2, prop);
-    draw_die_5(prop);
+    draw_x_die(3u, 3u, prop);
     draw_rect_die(3, 2, prop);
 
     return 0;
