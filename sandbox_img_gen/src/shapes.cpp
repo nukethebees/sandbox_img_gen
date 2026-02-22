@@ -71,15 +71,15 @@ auto CircleDrawer::draw_centred_diagonal_line_grid(std::size_t const divisions,
         throw std::invalid_argument("Width divisions < 1");
     }
 
-    auto const dw{img_w() / (static_cast<double>(divisions) + 1.0)};
-    auto const dh_abs{img_h() / (static_cast<double>(divisions) + 1.0)};
+    auto const dw{img_w() / static_cast<double>(divisions)};
+    auto const dh_abs{img_h() / static_cast<double>(divisions)};
     auto const dh{direction == DiagonalLineDirection::forward ? dh_abs * -1.0 : dh_abs};
 
     double x_root{0.0};
     double y_root{direction == DiagonalLineDirection::forward ? img_h() : 0.0};
 
     for (std::size_t i{0}; i < divisions; ++i) {
-        auto const mul{static_cast<double>(i + 1)};
+        auto const mul{static_cast<double>(i) + 0.5};
         auto const x{x_root + dw * mul};
         auto const y{y_root + dh * mul};
 
