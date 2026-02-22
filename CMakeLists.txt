@@ -9,32 +9,13 @@ endif()
 project ("sandbox_img_gen")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-include("cmake/utilities.cmake")
-
-function(define_msvc_settings)
-  add_library(msvc_settings INTERFACE)
-
-  set(compile_options
-      /Wall
-      -wd4710
-      -wd4711
-      /permissive-
-      /WX
-      /EHsc  # Enable standard C++ exceptions model
-  )
-  target_compile_options(msvc_settings INTERFACE
-    $<$<CXX_COMPILER_ID:MSVC>:${compile_options}>      
-  )
-endfunction()
-consume_setup_fn(define_msvc_settings)
-
-add_library(cpp_standard INTERFACE)
-target_compile_features(cpp_standard INTERFACE cxx_std_23)
 
 find_package(ImageMagick 
   COMPONENTS
     Magick++
     MagickCore
 )
+
+add_subdirectory(cmake)
 
 add_subdirectory ("sandbox_img_gen")

@@ -15,5 +15,4 @@ target_link_libraries(sandbox_img_gen_cli
     cpp_standard
     msvc_settings
     sandbox_img_gen
-    ImageMagick::Magick++
 )
