@@ -25,8 +25,8 @@ auto CircleDrawer::draw_centre(double const size_proportion) const -> mgk::Drawa
     return draw_relative(0.5, 0.5, size_proportion);
 }
 auto CircleDrawer::draw_centred_rect_grid(std::size_t const width_divisions,
-                                     std::size_t const height_divisions,
-                                     double const size_proportion) const
+                                          std::size_t const height_divisions,
+                                          double const size_proportion) const
     -> std::vector<Magick::DrawableCircle> {
     std::vector<Magick::DrawableCircle> out;
 
@@ -50,6 +50,36 @@ auto CircleDrawer::draw_centred_rect_grid(std::size_t const width_divisions,
 
             out.emplace_back(x, y, perim_x, perim_y);
         }
+    }
+
+    return out;
+}
+auto CircleDrawer::draw_centred_diagonal_line_grid(std::size_t const divisions,
+                                                   DiagonalLineDirection const direction,
+                                                   double const size_proportion) const
+    -> std::vector<Magick::DrawableCircle> {
+    std::vector<Magick::DrawableCircle> out;
+
+    if (divisions < 1) {
+        throw std::invalid_argument("Width divisions < 1");
+    }
+
+    auto const dw{img_w() / (static_cast<double>(divisions) + 1.0)};
+    auto const dh_abs{img_h() / (static_cast<double>(divisions) + 1.0)};
+    auto const dh{direction == DiagonalLineDirection::forward ? dh_abs * -1.0 : dh_abs};
+
+    double x_root{0.0};
+    double y_root{direction == DiagonalLineDirection::forward ? img_h() : 0.0};
+
+    for (std::size_t i{0}; i < divisions; ++i) {
+        auto const mul{static_cast<double>(i + 1)};
+        auto const x{x_root + dw * mul};
+        auto const y{y_root + dh * mul};
+
+        auto const perim_x{x + img_w() * size_proportion};
+        auto const perim_y{y + img_h() * size_proportion};
+
+        out.emplace_back(x, y, perim_x, perim_y);
     }
 
     return out;

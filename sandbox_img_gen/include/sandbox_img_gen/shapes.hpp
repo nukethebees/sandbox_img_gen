@@ -4,6 +4,8 @@
 #include <vector>
 
 namespace sbx {
+enum class DiagonalLineDirection : std::uint8_t { forward, backward };
+
 class CircleDrawer {
   public:
     CircleDrawer() = delete;
@@ -20,6 +22,10 @@ class CircleDrawer {
     auto draw_centred_rect_grid(std::size_t const width_divisions,
                                 std::size_t const height_divisions,
                                 double const size_proportion) const
+        -> std::vector<Magick::DrawableCircle>;
+    auto draw_centred_diagonal_line_grid(std::size_t const divisions,
+                                         DiagonalLineDirection const direction,
+                                         double const size_proportion) const
         -> std::vector<Magick::DrawableCircle>;
   private:
     double img_w_{0.0};
