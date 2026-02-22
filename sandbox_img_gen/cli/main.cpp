@@ -2,9 +2,11 @@
 
 #include <Magick++.h>
 
+#include <array>
 #include <cstdint>
 #include <cstddef>
 #include <print>
+#include <string_view>
 
 namespace mgk = Magick;
 
@@ -30,7 +32,7 @@ class ImgGenerator {
 
         auto const circle{circle_drawer_.draw_centre(0.1)};
         image.draw(circle);
-        image.write("circle.png");
+        write(image, "circle");
     }
     void draw_grid() {
         auto image{blank_image()};
@@ -40,7 +42,7 @@ class ImgGenerator {
             image.draw(c);
         }
 
-        image.write("grid_image_0.png");
+        write(image, "grid_image_0");
     }
 
     void draw_rect_die(std::size_t const w_div, std::size_t const h_div, double const proportion) {
@@ -51,7 +53,7 @@ class ImgGenerator {
             image.draw(c);
         }
 
-        image.write(std::format("die_{}.png", w_div * h_div));
+        write(image, std::format("die_{}", w_div * h_div));
     }
     void draw_x_die(std::size_t const back, std::size_t const fwd, double const proportion) {
         auto image{blank_image()};
@@ -79,7 +81,11 @@ class ImgGenerator {
             num--;
         }
 
-        image.write(std::format("die_{}.png", num));
+        write(image, std::format("die_{}", num));
+    }
+    void write(Magick::Image& image, std::string_view name) const {
+        auto const file_name{std::format("{}_{}x{}.png", name, width_, height_)};
+        image.write(file_name);
     }
   private:
     std::size_t width_{0u};
@@ -95,19 +101,23 @@ int main(int /*argc*/, char** argv) {
     static_assert(sizeof(mgk::Quantum) == sizeof(float));
 
     using namespace sbx;
-    ImgGenerator ig{1024u, 1204u};
-
-    ig.draw_circle();
-    ig.draw_grid();
 
     constexpr double prop{0.05};
+    std::array<std::size_t, 4> muls{1u, 2u, 4u, 8u};
+    for (auto mul : muls) {
+        auto const dim{1024u * mul};
+        ImgGenerator ig{dim, dim};
 
-    ig.draw_rect_die(1, 1, prop);
-    ig.draw_x_die(0u, 2u, prop);
-    ig.draw_x_die(3u, 0u, prop);
-    ig.draw_rect_die(2, 2, prop);
-    ig.draw_x_die(3u, 3u, prop);
-    ig.draw_rect_die(3, 2, prop);
+        ig.draw_circle();
+        ig.draw_grid();
+
+        ig.draw_rect_die(1, 1, prop);
+        ig.draw_x_die(0u, 2u, prop);
+        ig.draw_x_die(3u, 0u, prop);
+        ig.draw_rect_die(2, 2, prop);
+        ig.draw_x_die(3u, 3u, prop);
+        ig.draw_rect_die(3, 2, prop);
+    }
 
     return 0;
 }
