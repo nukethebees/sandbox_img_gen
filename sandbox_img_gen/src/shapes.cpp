@@ -8,7 +8,7 @@
 namespace mgk = Magick;
 
 namespace sbx {
-auto draw_circle(Dimension const img_w, Dimension const img_h, double proportion)
+auto draw_circle(double const img_w, double const img_h, double const proportion)
     -> mgk::DrawableCircle {
 
     auto const circle_w{img_w / 2.0};

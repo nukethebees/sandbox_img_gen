@@ -1,9 +1,8 @@
-#include "dimension.hpp"
-
 #include <Magick++.h>
 
 #include <cstddef>
 
 namespace sbx {
-auto draw_circle(Dimension width, Dimension height, double proportion) -> Magick::DrawableCircle;
+auto draw_circle(double const img_w, double const img_h, double const proportion)
+    -> Magick::DrawableCircle;
 }
