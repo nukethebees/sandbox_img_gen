@@ -37,13 +37,20 @@ auto CircleDrawer::draw_centred_rect_grid(std::size_t const width_divisions,
         throw std::invalid_argument("Height divisions < 1");
     }
 
-    auto const dw{img_w() / (static_cast<double>(width_divisions) + 1.0)};
-    auto const dh{img_h() / (static_cast<double>(height_divisions) + 1.0)};
+    // If input is 2x2
+    // Create a 2x2 grid
+    // place the dots in the centre of each
+
+    auto const dw{img_w() / static_cast<double>(width_divisions)};
+    auto const dh{img_h() / static_cast<double>(height_divisions)};
 
     for (std::size_t iw{0}; iw < width_divisions; ++iw) {
         for (std::size_t ih{0}; ih < height_divisions; ++ih) {
-            auto const x{dw * static_cast<double>(iw + 1)};
-            auto const y{dh * static_cast<double>(ih + 1)};
+            auto const w_mul{static_cast<double>(iw) + 0.5};
+            auto const h_mul{static_cast<double>(ih) + 0.5};
+
+            auto const x{dw * w_mul};
+            auto const y{dh * h_mul};
 
             auto const perim_x{x + img_w() * size_proportion};
             auto const perim_y{y + img_h() * size_proportion};
