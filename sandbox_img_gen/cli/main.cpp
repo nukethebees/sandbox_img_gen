@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <cstddef>
+#include <memory_resource>
 #include <print>
 #include <string_view>
 #include <thread>
@@ -28,14 +29,14 @@ class ImgGenerator {
 
         return image;
     }
-    void draw_circle() {
+    void draw_circle() const {
         auto image{blank_image()};
 
         auto const circle{circle_drawer_.draw_centre(0.1)};
         image.draw(circle);
         write(image, "circle");
     }
-    void draw_grid() {
+    void draw_grid() const {
         auto image{blank_image()};
 
         auto const circles{circle_drawer_.draw_centred_rect_grid(2u, 2u, 0.05)};
@@ -46,7 +47,9 @@ class ImgGenerator {
         write(image, "grid_image_0");
     }
 
-    void draw_rect_die(std::size_t const w_div, std::size_t const h_div, double const proportion) {
+    void draw_rect_die(std::size_t const w_div,
+                       std::size_t const h_div,
+                       double const proportion) const {
         auto image{blank_image()};
 
         auto const circles{circle_drawer_.draw_centred_rect_grid(w_div, h_div, proportion)};
@@ -56,7 +59,7 @@ class ImgGenerator {
 
         write(image, std::format("die_{}", w_div * h_div));
     }
-    void draw_x_die(std::size_t const back, std::size_t const fwd, double const proportion) {
+    void draw_x_die(std::size_t const back, std::size_t const fwd, double const proportion) const {
         auto image{blank_image()};
 
         auto draw_line{[&](std::size_t const n,
@@ -94,6 +97,28 @@ class ImgGenerator {
     sbx::CircleDrawer circle_drawer_;
 };
 
+template <std::size_t n>
+struct MonotonicBufferMr {
+    MonotonicBufferMr()
+        : buffer{}
+        , mr{buffer.data(), buffer.size(), std::pmr::null_memory_resource()} {}
+
+    MonotonicBufferMr(MonotonicBufferMr const&) = delete;
+    MonotonicBufferMr(MonotonicBufferMr&&) = delete;
+
+    auto& operator=(MonotonicBufferMr const&) = delete;
+    auto& operator=(MonotonicBufferMr&&) = delete;
+
+    operator std::pmr::memory_resource*() { return &mr; }
+    template <typename T>
+    operator std::pmr::polymorphic_allocator<T>() {
+        return {&mr};
+    }
+
+    std::array<std::byte, n> buffer;
+    std::pmr::monotonic_buffer_resource mr;
+};
+
 }
 
 int main(int /*argc*/, char** argv) {
@@ -104,15 +129,21 @@ int main(int /*argc*/, char** argv) {
     using namespace sbx;
 
     constexpr double prop{0.05};
-    std::array<std::size_t, 4> muls{1u, 2u, 4u, 8u};
+    constexpr std::array<std::size_t, 4> muls{{1u, 2u, 4u, 8u}};
     std::vector<std::thread> threads;
     threads.reserve(muls.size());
 
-    for (auto mul : muls) {
-        threads.emplace_back([mul]() {
-            auto const dim{1024u * mul};
-            ImgGenerator ig{dim, dim};
+    MonotonicBufferMr<sizeof(ImgGenerator) * muls.size()> igs_memory;
+    std::pmr::vector<ImgGenerator> igs{igs_memory};
+    igs.reserve(muls.size());
 
+    for (auto mul : muls) {
+        auto const dim{1024u * mul};
+        igs.emplace_back(dim, dim);
+    }
+
+    for (std::size_t i{0}; i < muls.size(); ++i) {
+        threads.emplace_back([&ig = igs[i]]() {
             ig.draw_circle();
             ig.draw_grid();
 
