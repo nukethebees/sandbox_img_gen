@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <print>
 #include <string_view>
+#include <thread>
 
 namespace mgk = Magick;
 
@@ -104,19 +105,28 @@ int main(int /*argc*/, char** argv) {
 
     constexpr double prop{0.05};
     std::array<std::size_t, 4> muls{1u, 2u, 4u, 8u};
+    std::vector<std::thread> threads;
+    threads.reserve(muls.size());
+
     for (auto mul : muls) {
-        auto const dim{1024u * mul};
-        ImgGenerator ig{dim, dim};
+        threads.emplace_back([mul]() {
+            auto const dim{1024u * mul};
+            ImgGenerator ig{dim, dim};
 
-        ig.draw_circle();
-        ig.draw_grid();
+            ig.draw_circle();
+            ig.draw_grid();
 
-        ig.draw_rect_die(1, 1, prop);
-        ig.draw_x_die(0u, 2u, prop);
-        ig.draw_x_die(3u, 0u, prop);
-        ig.draw_rect_die(2, 2, prop);
-        ig.draw_x_die(3u, 3u, prop);
-        ig.draw_rect_die(3, 2, prop);
+            ig.draw_rect_die(1, 1, prop);
+            ig.draw_x_die(0u, 2u, prop);
+            ig.draw_x_die(3u, 0u, prop);
+            ig.draw_rect_die(2, 2, prop);
+            ig.draw_x_die(3u, 3u, prop);
+            ig.draw_rect_die(3, 2, prop);
+        });
+    }
+
+    for (auto& t : threads) {
+        t.join();
     }
 
     return 0;
