@@ -42,47 +42,21 @@ static void draw_grid() {
 
     image.write("grid_image_0.png");
 }
-static void draw_die_1() {
+
+static void
+    draw_rect_die(std::size_t const w_div, std::size_t const h_div, double const proportion) {
     constexpr std::size_t width{1024uz};
     constexpr std::size_t height{width};
     auto image{blank_image(width, height)};
 
     sbx::CircleDrawer drawer{width, height};
 
-    auto const circles{drawer.draw_centred_rect_grid(1, 1, 0.05)};
+    auto const circles{drawer.draw_centred_rect_grid(w_div, h_div, proportion)};
     for (auto const& c : circles) {
         image.draw(c);
     }
 
-    image.write("die_1.png");
-}
-static void draw_die_4() {
-    constexpr std::size_t width{1024uz};
-    constexpr std::size_t height{width};
-    auto image{blank_image(width, height)};
-
-    sbx::CircleDrawer drawer{width, height};
-
-    auto const circles{drawer.draw_centred_rect_grid(2u, 2u, 0.05)};
-    for (auto const& c : circles) {
-        image.draw(c);
-    }
-
-    image.write("die_4.png");
-}
-static void draw_die_6() {
-    constexpr std::size_t width{1024uz};
-    constexpr std::size_t height{width};
-    auto image{blank_image(width, height)};
-
-    sbx::CircleDrawer drawer{width, height};
-
-    auto const circles{drawer.draw_centred_rect_grid(2u, 3u, 0.05)};
-    for (auto const& c : circles) {
-        image.draw(c);
-    }
-
-    image.write("die_6.png");
+    image.write(std::format("die_{}.png", w_div * h_div));
 }
 
 int main(int /*argc*/, char** argv) {
@@ -93,9 +67,11 @@ int main(int /*argc*/, char** argv) {
     draw_circle();
     draw_grid();
 
-    draw_die_1();
-    draw_die_4();
-    draw_die_6();
+    constexpr double prop{0.05};
+
+    draw_rect_die(1, 1, prop);
+    draw_rect_die(2, 2, prop);
+    draw_rect_die(2, 3, prop);
 
     return 0;
 }
