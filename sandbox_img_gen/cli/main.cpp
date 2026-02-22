@@ -16,7 +16,8 @@ static void draw_circle() {
     mgk::ColorRGB const colour{1.f, 1.f, 1.f, 1.f};
     mgk::Image image{geometry, colour};
 
-    auto const circle{sbx::draw_circle(width, height, 0.1)};
+    sbx::CircleDrawer circle_drawer{width, height};
+    auto const circle{circle_drawer.draw_centre(0.1)};
 
     image.draw(circle);
     image.write("circle.png");
