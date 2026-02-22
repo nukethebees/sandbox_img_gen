@@ -13,7 +13,9 @@ class CircleDrawer {
     auto img_w() const { return img_w_; }
     auto img_h() const { return img_h_; }
 
-    auto draw_centre(double const proportion) const -> Magick::DrawableCircle;
+    auto draw_relative(double const w_pos, double const h_pos, double const size_proportion) const
+        -> Magick::DrawableCircle;
+    auto draw_centre(double const size_proportion) const -> Magick::DrawableCircle;
   private:
     double img_w_{0.0};
     double img_h_{0.0};
