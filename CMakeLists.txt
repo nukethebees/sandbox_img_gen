@@ -15,7 +15,9 @@ function(define_msvc_settings)
   add_library(msvc_settings INTERFACE)
 
   set(compile_options
-      /W4
+      /Wall
+      -wd4710
+      -wd4711
       /permissive-
       /WX
       /EHsc  # Enable standard C++ exceptions model
