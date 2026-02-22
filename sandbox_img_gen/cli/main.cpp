@@ -105,8 +105,7 @@ struct MonotonicBufferMr {
     inline static constexpr std::size_t n_bytes{sizeof(T) * n_elems};
 
     MonotonicBufferMr()
-        : buffer{}
-        , mr{buffer.data(), buffer.size(), std::pmr::null_memory_resource()} {}
+        : mr{&buffer, n_bytes, std::pmr::null_memory_resource()} {}
 
     MonotonicBufferMr(MonotonicBufferMr const&) = delete;
     MonotonicBufferMr(MonotonicBufferMr&&) = delete;
@@ -116,8 +115,26 @@ struct MonotonicBufferMr {
 
     auto allocator() -> std::pmr::polymorphic_allocator<T> { return {&mr}; }
 
-    std::array<std::byte, n_bytes> buffer;
     std::pmr::monotonic_buffer_resource mr;
+  private:
+    alignas(T) std::byte buffer[n_bytes];
+};
+
+template <typename T, std::size_t n_elems>
+struct StaticPmrVector {
+    StaticPmrVector()
+        : vec{memory.allocator()} {
+        vec.reserve(n_elems);
+    }
+
+    StaticPmrVector(StaticPmrVector const&) = delete;
+    StaticPmrVector(StaticPmrVector&&) = delete;
+
+    auto& operator=(StaticPmrVector const&) = delete;
+    auto& operator=(StaticPmrVector&&) = delete;
+
+    sbx::MonotonicBufferMr<T, n_elems> memory{};
+    std::pmr::vector<T> vec;
 };
 
 }
@@ -128,9 +145,8 @@ int main(int /*argc*/, char** argv) {
     constexpr double prop{0.05};
     constexpr std::array<std::size_t, 4> muls{{1u, 2u, 4u, 8u}};
 
-    sbx::MonotonicBufferMr<sbx::ImgGenerator, muls.size()> igs_memory;
-    std::pmr::vector<sbx::ImgGenerator> igs{igs_memory.allocator()};
-    igs.reserve(muls.size());
+    sbx::StaticPmrVector<sbx::ImgGenerator, muls.size()> igs_vec;
+    auto& igs{igs_vec.vec};
 
     for (auto mul : muls) {
         auto const dim{1024u * mul};
