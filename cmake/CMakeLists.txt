@@ -5,6 +5,7 @@ function(define_msvc_settings)
 
   set(compile_options
       /Wall
+      -wd4514
       -wd4710
       -wd4711
       /permissive-

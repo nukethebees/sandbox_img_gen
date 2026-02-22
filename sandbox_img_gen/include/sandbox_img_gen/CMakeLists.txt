@@ -7,4 +7,5 @@ target_sources(sandbox_img_gen_headers
     TYPE HEADERS
     FILES
       shapes.hpp
+      dimension.hpp
 )
