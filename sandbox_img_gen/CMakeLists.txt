@@ -2,7 +2,7 @@
 
 target_sources(sandbox_img_gen 
   PRIVATE
-    "sandbox_img_gen.cpp"
+    "main.cpp"
 )
 
 target_include_directories(sandbox_img_gen
@@ -18,4 +18,5 @@ set_target_properties(sandbox_img_gen
 target_link_libraries(sandbox_img_gen
   PRIVATE
     msvc_settings
+    ImageMagick::Magick++
 )

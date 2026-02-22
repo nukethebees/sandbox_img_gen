@@ -26,4 +26,6 @@ function(define_msvc_settings)
 endfunction()
 consume_setup_fn(define_msvc_settings)
 
+find_package(ImageMagick COMPONENTS Magick++)
+
 add_subdirectory ("sandbox_img_gen")
