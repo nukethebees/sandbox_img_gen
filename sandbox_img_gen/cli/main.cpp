@@ -59,35 +59,21 @@ static void
 
     image.write(std::format("die_{}.png", w_div * h_div));
 }
-static void draw_die_2(double const proportion) {
+static void draw_line_die(std::size_t const div,
+                          DiagonalLineDirection const direction,
+                          double const proportion) {
     constexpr std::size_t width{1024uz};
     constexpr std::size_t height{width};
     auto image{blank_image(width, height)};
 
     sbx::CircleDrawer drawer{width, height};
 
-    auto const circles{
-        drawer.draw_centred_diagonal_line_grid(2u, DiagonalLineDirection::backward, proportion)};
+    auto const circles{drawer.draw_centred_diagonal_line_grid(div, direction, proportion)};
     for (auto const& c : circles) {
         image.draw(c);
     }
 
-    image.write("die_2.png");
-}
-static void draw_die_3(double const proportion) {
-    constexpr std::size_t width{1024uz};
-    constexpr std::size_t height{width};
-    auto image{blank_image(width, height)};
-
-    sbx::CircleDrawer drawer{width, height};
-
-    auto const circles{
-        drawer.draw_centred_diagonal_line_grid(3u, DiagonalLineDirection::forward, proportion)};
-    for (auto const& c : circles) {
-        image.draw(c);
-    }
-
-    image.write("die_3.png");
+    image.write(std::format("die_{}.png", div));
 }
 static void draw_die_5(double const proportion) {
     constexpr std::size_t width{1024uz};
@@ -96,14 +82,14 @@ static void draw_die_5(double const proportion) {
 
     sbx::CircleDrawer drawer{width, height};
 
-    auto const circles1{
+    auto const circles_fwd{
         drawer.draw_centred_diagonal_line_grid(3u, DiagonalLineDirection::forward, proportion)};
-    auto const circles2{
+    auto const circles_backward{
         drawer.draw_centred_diagonal_line_grid(3u, DiagonalLineDirection::backward, proportion)};
-    for (auto const& c : circles1) {
+    for (auto const& c : circles_fwd) {
         image.draw(c);
     }
-    for (auto const& c : circles2) {
+    for (auto const& c : circles_backward) {
         image.draw(c);
     }
 
@@ -123,12 +109,11 @@ int main(int /*argc*/, char** argv) {
     constexpr double prop{0.05};
 
     draw_rect_die(1, 1, prop);
+    draw_line_die(2u, DiagonalLineDirection::backward, prop);
+    draw_line_die(3u, DiagonalLineDirection::forward, prop);
     draw_rect_die(2, 2, prop);
-    draw_rect_die(2, 3, prop);
-
-    draw_die_3(prop);
     draw_die_5(prop);
-    draw_die_2(prop);
+    draw_rect_die(3, 2, prop);
 
     return 0;
 }
