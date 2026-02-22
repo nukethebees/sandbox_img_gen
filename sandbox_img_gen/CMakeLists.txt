@@ -12,6 +12,7 @@ target_link_libraries(sandbox_img_gen
     ImageMagick::Magick++
     sandbox_img_gen_headers
   PRIVATE
+    c_standard
     cpp_standard
     msvc_settings
 )
@@ -28,3 +29,4 @@ install(
   ARCHIVE DESTINATION lib/static
   FILE_SET HEADERS DESTINATION include
 )
+

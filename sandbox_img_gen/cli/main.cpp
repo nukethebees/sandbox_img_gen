@@ -1,14 +1,17 @@
+#include <float.h> // Needed first to fix TBB errors
+
 #include <sandbox_img_gen/shapes.hpp>
 
 #include <Magick++.h>
 
+#include <oneapi/tbb.h>
+
 #include <array>
 #include <cstdint>
 #include <cstddef>
+#include <functional>
 #include <memory_resource>
-#include <print>
 #include <string_view>
-#include <thread>
 
 namespace mgk = Magick;
 
@@ -97,8 +100,10 @@ class ImgGenerator {
     sbx::CircleDrawer circle_drawer_;
 };
 
-template <std::size_t n>
+template <typename T, std::size_t n_elems>
 struct MonotonicBufferMr {
+    inline static constexpr std::size_t n_bytes{sizeof(T) * n_elems};
+
     MonotonicBufferMr()
         : buffer{}
         , mr{buffer.data(), buffer.size(), std::pmr::null_memory_resource()} {}
@@ -109,13 +114,9 @@ struct MonotonicBufferMr {
     auto& operator=(MonotonicBufferMr const&) = delete;
     auto& operator=(MonotonicBufferMr&&) = delete;
 
-    operator std::pmr::memory_resource*() { return &mr; }
-    template <typename T>
-    operator std::pmr::polymorphic_allocator<T>() {
-        return {&mr};
-    }
+    auto allocator() -> std::pmr::polymorphic_allocator<T> { return {&mr}; }
 
-    std::array<std::byte, n> buffer;
+    std::array<std::byte, n_bytes> buffer;
     std::pmr::monotonic_buffer_resource mr;
 };
 
@@ -124,17 +125,11 @@ struct MonotonicBufferMr {
 int main(int /*argc*/, char** argv) {
     mgk::MagickPlusPlusGenesis genesis{*argv};
 
-    static_assert(sizeof(mgk::Quantum) == sizeof(float));
-
-    using namespace sbx;
-
     constexpr double prop{0.05};
     constexpr std::array<std::size_t, 4> muls{{1u, 2u, 4u, 8u}};
-    std::vector<std::thread> threads;
-    threads.reserve(muls.size());
 
-    MonotonicBufferMr<sizeof(ImgGenerator) * muls.size()> igs_memory;
-    std::pmr::vector<ImgGenerator> igs{igs_memory};
+    sbx::MonotonicBufferMr<sbx::ImgGenerator, muls.size()> igs_memory;
+    std::pmr::vector<sbx::ImgGenerator> igs{igs_memory.allocator()};
     igs.reserve(muls.size());
 
     for (auto mul : muls) {
@@ -142,23 +137,23 @@ int main(int /*argc*/, char** argv) {
         igs.emplace_back(dim, dim);
     }
 
+    using Task = std::function<void()>;
+    std::vector<Task> tasks;
+    tasks.reserve(300);
+
     for (std::size_t i{0}; i < muls.size(); ++i) {
-        threads.emplace_back([&ig = igs[i]]() {
-            ig.draw_circle();
-            ig.draw_grid();
-
-            ig.draw_rect_die(1, 1, prop);
-            ig.draw_x_die(0u, 2u, prop);
-            ig.draw_x_die(3u, 0u, prop);
-            ig.draw_rect_die(2, 2, prop);
-            ig.draw_x_die(3u, 3u, prop);
-            ig.draw_rect_die(3, 2, prop);
-        });
+        auto& ig{igs[i]};
+        tasks.emplace_back([&ig]() { ig.draw_circle(); });
+        tasks.emplace_back([&ig]() { ig.draw_grid(); });
+        tasks.emplace_back([&ig]() { ig.draw_rect_die(1, 1, prop); });
+        tasks.emplace_back([&ig]() { ig.draw_x_die(0u, 2u, prop); });
+        tasks.emplace_back([&ig]() { ig.draw_x_die(3u, 0u, prop); });
+        tasks.emplace_back([&ig]() { ig.draw_rect_die(2, 2, prop); });
+        tasks.emplace_back([&ig]() { ig.draw_x_die(3u, 3u, prop); });
+        tasks.emplace_back([&ig]() { ig.draw_rect_die(3, 2, prop); });
     }
 
-    for (auto& t : threads) {
-        t.join();
-    }
+    oneapi::tbb::parallel_for(std::size_t{0}, tasks.size(), [&](std::size_t i) { tasks[i](); });
 
     return 0;
 }

@@ -15,7 +15,9 @@ find_package(ImageMagick
     Magick++
     MagickCore
 )
+find_package(tbb CONFIG REQUIRED)
 
 add_subdirectory(cmake)
 
 add_subdirectory ("sandbox_img_gen")
+
