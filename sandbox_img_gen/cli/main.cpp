@@ -42,6 +42,48 @@ static void draw_grid() {
 
     image.write("grid_image_0.png");
 }
+static void draw_die_1() {
+    constexpr std::size_t width{1024uz};
+    constexpr std::size_t height{width};
+    auto image{blank_image(width, height)};
+
+    sbx::CircleDrawer drawer{width, height};
+
+    auto const circles{drawer.draw_centred_grid(1, 1, 0.05)};
+    for (auto const& c : circles) {
+        image.draw(c);
+    }
+
+    image.write("die_1.png");
+}
+static void draw_die_4() {
+    constexpr std::size_t width{1024uz};
+    constexpr std::size_t height{width};
+    auto image{blank_image(width, height)};
+
+    sbx::CircleDrawer drawer{width, height};
+
+    auto const circles{drawer.draw_centred_grid(2u, 2u, 0.05)};
+    for (auto const& c : circles) {
+        image.draw(c);
+    }
+
+    image.write("die_4.png");
+}
+static void draw_die_6() {
+    constexpr std::size_t width{1024uz};
+    constexpr std::size_t height{width};
+    auto image{blank_image(width, height)};
+
+    sbx::CircleDrawer drawer{width, height};
+
+    auto const circles{drawer.draw_centred_grid(2u, 3u, 0.05)};
+    for (auto const& c : circles) {
+        image.draw(c);
+    }
+
+    image.write("die_6.png");
+}
 
 int main(int /*argc*/, char** argv) {
     mgk::MagickPlusPlusGenesis genesis{*argv};
@@ -50,6 +92,10 @@ int main(int /*argc*/, char** argv) {
 
     draw_circle();
     draw_grid();
+
+    draw_die_1();
+    draw_die_4();
+    draw_die_6();
 
     return 0;
 }
