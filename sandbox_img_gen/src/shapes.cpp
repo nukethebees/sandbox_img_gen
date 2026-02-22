@@ -24,7 +24,7 @@ auto CircleDrawer::draw_relative(double const w_pos,
 auto CircleDrawer::draw_centre(double const size_proportion) const -> mgk::DrawableCircle {
     return draw_relative(0.5, 0.5, size_proportion);
 }
-auto CircleDrawer::draw_centred_grid(std::size_t const width_divisions,
+auto CircleDrawer::draw_centred_rect_grid(std::size_t const width_divisions,
                                      std::size_t const height_divisions,
                                      double const size_proportion) const
     -> std::vector<Magick::DrawableCircle> {

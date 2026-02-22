@@ -35,7 +35,7 @@ static void draw_grid() {
 
     sbx::CircleDrawer drawer{width, height};
 
-    auto const circles{drawer.draw_centred_grid(2u, 2u, 0.05)};
+    auto const circles{drawer.draw_centred_rect_grid(2u, 2u, 0.05)};
     for (auto const& c : circles) {
         image.draw(c);
     }
@@ -49,7 +49,7 @@ static void draw_die_1() {
 
     sbx::CircleDrawer drawer{width, height};
 
-    auto const circles{drawer.draw_centred_grid(1, 1, 0.05)};
+    auto const circles{drawer.draw_centred_rect_grid(1, 1, 0.05)};
     for (auto const& c : circles) {
         image.draw(c);
     }
@@ -63,7 +63,7 @@ static void draw_die_4() {
 
     sbx::CircleDrawer drawer{width, height};
 
-    auto const circles{drawer.draw_centred_grid(2u, 2u, 0.05)};
+    auto const circles{drawer.draw_centred_rect_grid(2u, 2u, 0.05)};
     for (auto const& c : circles) {
         image.draw(c);
     }
@@ -77,7 +77,7 @@ static void draw_die_6() {
 
     sbx::CircleDrawer drawer{width, height};
 
-    auto const circles{drawer.draw_centred_grid(2u, 3u, 0.05)};
+    auto const circles{drawer.draw_centred_rect_grid(2u, 3u, 0.05)};
     for (auto const& c : circles) {
         image.draw(c);
     }
