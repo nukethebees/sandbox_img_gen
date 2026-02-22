@@ -1,8 +1,8 @@
-﻿add_executable (sandbox_img_gen)
+add_library(sandbox_img_gen)
 
 target_sources(sandbox_img_gen 
   PRIVATE
-    "main.cpp"
+    src/shapes.cpp
 )
 
 target_include_directories(sandbox_img_gen
@@ -10,13 +10,16 @@ target_include_directories(sandbox_img_gen
     ${CMAKE_SOURCE_DIR}/include
 )
 
-set_target_properties(sandbox_img_gen 
-  PROPERTIES
-    CXX_STANDARD 23
-)
-
 target_link_libraries(sandbox_img_gen
   PRIVATE
+    cpp_standard
     msvc_settings
     ImageMagick::Magick++
 )
+
+add_subdirectory(cli)
+
+install(TARGETS sandbox_img_gen sandbox_img_gen_cli
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib/static)

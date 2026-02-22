@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.28)
+cmake_minimum_required (VERSION 4.1)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
@@ -28,17 +28,13 @@ function(define_msvc_settings)
 endfunction()
 consume_setup_fn(define_msvc_settings)
 
-find_package(ImageMagick
+add_library(cpp_standard INTERFACE)
+target_compile_features(cpp_standard INTERFACE cxx_std_23)
+
+find_package(ImageMagick 
   COMPONENTS
     Magick++
     MagickCore
 )
-
-print_var(ImageMagick_FOUND)
-print_var(ImageMagick_VERSION)
-print_var(ImageMagick_LIBRARIES)
-print_var(ImageMagick_INCLUDE_DIRS)
-print_var(ImageMagick_COMPILE_OPTIONS)
-print_var(ImageMagick_LIBRARIES)
 
 add_subdirectory ("sandbox_img_gen")
