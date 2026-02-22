@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Magick++.h>
 
 #include <cstddef>
