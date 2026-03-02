@@ -8,4 +8,5 @@ target_sources(sandbox_img_gen_headers
     FILES
       shapes.hpp
       dimension.hpp
+      static_pmr_vector.hpp
 )

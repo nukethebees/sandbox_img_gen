@@ -1,6 +1,7 @@
 #include <float.h> // Needed first to fix TBB errors
 
 #include <sandbox_img_gen/shapes.hpp>
+#include <sandbox_img_gen/static_pmr_vector.hpp>
 
 #include <Magick++.h>
 
@@ -10,7 +11,6 @@
 #include <cstdint>
 #include <cstddef>
 #include <functional>
-#include <memory_resource>
 #include <string_view>
 
 namespace mgk = Magick;
@@ -99,44 +99,6 @@ class ImgGenerator {
     std::size_t height_{0u};
     sbx::CircleDrawer circle_drawer_;
 };
-
-template <typename T, std::size_t n_elems>
-struct MonotonicBufferMr {
-    inline static constexpr std::size_t n_bytes{sizeof(T) * n_elems};
-
-    MonotonicBufferMr()
-        : mr{&buffer, n_bytes, std::pmr::null_memory_resource()} {}
-
-    MonotonicBufferMr(MonotonicBufferMr const&) = delete;
-    MonotonicBufferMr(MonotonicBufferMr&&) = delete;
-
-    auto& operator=(MonotonicBufferMr const&) = delete;
-    auto& operator=(MonotonicBufferMr&&) = delete;
-
-    auto allocator() -> std::pmr::polymorphic_allocator<T> { return {&mr}; }
-
-    std::pmr::monotonic_buffer_resource mr;
-  private:
-    alignas(T) std::byte buffer[n_bytes];
-};
-
-template <typename T, std::size_t n_elems>
-struct StaticPmrVector {
-    StaticPmrVector()
-        : vec{memory.allocator()} {
-        vec.reserve(n_elems);
-    }
-
-    StaticPmrVector(StaticPmrVector const&) = delete;
-    StaticPmrVector(StaticPmrVector&&) = delete;
-
-    auto& operator=(StaticPmrVector const&) = delete;
-    auto& operator=(StaticPmrVector&&) = delete;
-
-    sbx::MonotonicBufferMr<T, n_elems> memory{};
-    std::pmr::vector<T> vec;
-};
-
 }
 
 int main(int /*argc*/, char** argv) {
