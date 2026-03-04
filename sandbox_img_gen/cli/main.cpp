@@ -14,6 +14,7 @@
 #include <functional>
 #include <string_view>
 #include <format>
+#include <vector>
 
 namespace mgk = Magick;
 
@@ -29,9 +30,10 @@ class ImgGenerator {
         , circle_drawer_{static_cast<double>(width_), static_cast<double>(height_)} {}
 
     void create_directories() {
-        fs::create_directories("output/dice");
-        fs::create_directories("output/squares");
-        fs::create_directories("output/misc");
+        constexpr std::array<std::string_view, 3> dirs{squares_dir, dice_dir, misc_dir};
+        for (auto const dir : dirs) {
+            fs::create_directories(std::format("{}/{}", output_dir, dir));
+        }
     }
 
     auto blank_image(mgk::ColorRGB colour) const {
@@ -51,7 +53,7 @@ class ImgGenerator {
 
         auto const circle{circle_drawer_.draw_centre(0.1)};
         image.draw(circle);
-        write(image, "misc/circle");
+        write(image, std::format("{}/circle", misc_dir));
     }
     void draw_grid() const {
         auto image{blank_image()};
@@ -61,7 +63,7 @@ class ImgGenerator {
             image.draw(c);
         }
 
-        write(image, "misc/grid_image_0");
+        write(image, std::format("{}/grid_image_0", misc_dir));
     }
 
     void draw_rect_die(std::size_t const w_div,
@@ -74,7 +76,7 @@ class ImgGenerator {
             image.draw(c);
         }
 
-        write(image, std::format("dice/die_{}", w_div * h_div));
+        write(image, std::format("{}/die_{}", dice_dir, w_div * h_div));
     }
     void draw_x_die(std::size_t const back, std::size_t const fwd, double const proportion) const {
         auto image{blank_image()};
@@ -102,7 +104,7 @@ class ImgGenerator {
             num--;
         }
 
-        write(image, std::format("dice/die_{}", num));
+        write(image, std::format("{}/die_{}", dice_dir, num));
     }
     void draw_square(double rel_size) {
         mgk::ColorRGB const red{1.f, 0.f, 0.f, 1.f};
@@ -122,7 +124,7 @@ class ImgGenerator {
         draw_list.push_back(mgk::DrawableRectangle(x0, y0, x0 + sq_side, y0 + sq_side));
         image.draw(draw_list);
 
-        auto name{std::format("squares/square_{:.2f}", rel_size)};
+        auto name{std::format("{}/square_{:.2f}", squares_dir, rel_size)};
         for (char& c : name) {
             if (c == '.') {
                 c = 'p';
@@ -131,13 +133,18 @@ class ImgGenerator {
         write(image, name);
     }
     void write(Magick::Image& image, std::string_view name) const {
-        auto const file_name{std::format("output/{}_{}x{}.png", name, width_, height_)};
+        auto const file_name{std::format("{}/{}_{}x{}.png", output_dir, name, width_, height_)};
         image.write(file_name);
     }
   private:
     std::size_t width_{0u};
     std::size_t height_{0u};
     sbx::CircleDrawer circle_drawer_;
+
+    inline static constexpr std::string_view output_dir{"output"};
+    inline static constexpr std::string_view misc_dir{"misc"};
+    inline static constexpr std::string_view squares_dir{"squares"};
+    inline static constexpr std::string_view dice_dir{"dice"};
 };
 }
 
