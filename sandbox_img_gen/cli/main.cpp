@@ -29,9 +29,9 @@ class ImgGenerator {
         , circle_drawer_{static_cast<double>(width_), static_cast<double>(height_)} {}
 
     void create_directories() {
-        fs::create_directories("dice");
-        fs::create_directories("squares");
-        fs::create_directories("misc");
+        fs::create_directories("output/dice");
+        fs::create_directories("output/squares");
+        fs::create_directories("output/misc");
     }
 
     auto blank_image(mgk::ColorRGB colour) const {
@@ -131,7 +131,7 @@ class ImgGenerator {
         write(image, name);
     }
     void write(Magick::Image& image, std::string_view name) const {
-        auto const file_name{std::format("{}_{}x{}.png", name, width_, height_)};
+        auto const file_name{std::format("output/{}_{}x{}.png", name, width_, height_)};
         image.write(file_name);
     }
   private:
@@ -145,13 +145,12 @@ int main(int /*argc*/, char** argv) {
     mgk::MagickPlusPlusGenesis genesis{*argv};
 
     constexpr double prop{0.05};
-    constexpr std::array<std::size_t, 4> muls{{1u, 2u, 4u, 8u}};
+    constexpr std::array<std::size_t, 10> dims{{16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192}};
 
-    sbx::StaticPmrVector<sbx::ImgGenerator, muls.size()> igs_vec;
+    sbx::StaticPmrVector<sbx::ImgGenerator, dims.size()> igs_vec;
     auto& igs{igs_vec.vec};
 
-    for (auto mul : muls) {
-        auto const dim{1024u * mul};
+    for (auto dim : dims) {
         igs.emplace_back(dim, dim);
     }
     igs.back().create_directories();
@@ -160,7 +159,7 @@ int main(int /*argc*/, char** argv) {
     std::vector<Task> tasks;
     tasks.reserve(300);
 
-    for (std::size_t i{0}; i < muls.size(); ++i) {
+    for (std::size_t i{0}; i < dims.size(); ++i) {
         auto& ig{igs[i]};
         tasks.emplace_back([&ig]() { ig.draw_circle(); });
         tasks.emplace_back([&ig]() { ig.draw_grid(); });
