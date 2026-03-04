@@ -10,12 +10,16 @@
 #include <array>
 #include <cstdint>
 #include <cstddef>
+#include <filesystem>
 #include <functional>
 #include <string_view>
+#include <format>
 
 namespace mgk = Magick;
 
 namespace sbx {
+namespace fs = std::filesystem;
+
 class ImgGenerator {
   public:
     ImgGenerator() = delete;
@@ -23,21 +27,31 @@ class ImgGenerator {
         : width_{width}
         , height_{height}
         , circle_drawer_{static_cast<double>(width_), static_cast<double>(height_)} {}
-    auto blank_image() const {
+
+    void create_directories() {
+        fs::create_directories("dice");
+        fs::create_directories("squares");
+        fs::create_directories("misc");
+    }
+
+    auto blank_image(mgk::ColorRGB colour) const {
         constexpr std::int64_t offset{0};
 
         mgk::Geometry const geometry{width_, height_, offset, offset};
-        mgk::ColorRGB const colour{1.f, 1.f, 1.f, 1.f};
         mgk::Image image{geometry, colour};
 
         return image;
+    }
+    auto blank_image() const {
+        mgk::ColorRGB const colour{1.f, 1.f, 1.f, 1.f};
+        return blank_image(colour);
     }
     void draw_circle() const {
         auto image{blank_image()};
 
         auto const circle{circle_drawer_.draw_centre(0.1)};
         image.draw(circle);
-        write(image, "circle");
+        write(image, "misc/circle");
     }
     void draw_grid() const {
         auto image{blank_image()};
@@ -47,7 +61,7 @@ class ImgGenerator {
             image.draw(c);
         }
 
-        write(image, "grid_image_0");
+        write(image, "misc/grid_image_0");
     }
 
     void draw_rect_die(std::size_t const w_div,
@@ -60,7 +74,7 @@ class ImgGenerator {
             image.draw(c);
         }
 
-        write(image, std::format("die_{}", w_div * h_div));
+        write(image, std::format("dice/die_{}", w_div * h_div));
     }
     void draw_x_die(std::size_t const back, std::size_t const fwd, double const proportion) const {
         auto image{blank_image()};
@@ -88,7 +102,33 @@ class ImgGenerator {
             num--;
         }
 
-        write(image, std::format("die_{}", num));
+        write(image, std::format("dice/die_{}", num));
+    }
+    void draw_square(double rel_size) {
+        mgk::ColorRGB const red{1.f, 0.f, 0.f, 1.f};
+        auto image{blank_image(red)};
+
+        auto const i_w{static_cast<double>(width_)};
+        auto const i_h{static_cast<double>(height_)};
+
+        auto const sq_side{i_w * rel_size};
+
+        auto const x0{(i_w - sq_side) / 2.0};
+        auto const y0{(i_h - sq_side) / 2.0};
+
+        mgk::DrawableList draw_list;
+        draw_list.push_back(mgk::DrawableStrokeColor("none"));
+        draw_list.push_back(mgk::DrawableFillColor("green"));
+        draw_list.push_back(mgk::DrawableRectangle(x0, y0, x0 + sq_side, y0 + sq_side));
+        image.draw(draw_list);
+
+        auto name{std::format("squares/square_{:.2f}", rel_size)};
+        for (char& c : name) {
+            if (c == '.') {
+                c = 'p';
+            }
+        }
+        write(image, name);
     }
     void write(Magick::Image& image, std::string_view name) const {
         auto const file_name{std::format("{}_{}x{}.png", name, width_, height_)};
@@ -114,6 +154,7 @@ int main(int /*argc*/, char** argv) {
         auto const dim{1024u * mul};
         igs.emplace_back(dim, dim);
     }
+    igs.back().create_directories();
 
     using Task = std::function<void()>;
     std::vector<Task> tasks;
@@ -129,6 +170,10 @@ int main(int /*argc*/, char** argv) {
         tasks.emplace_back([&ig]() { ig.draw_rect_die(2, 2, prop); });
         tasks.emplace_back([&ig]() { ig.draw_x_die(3u, 3u, prop); });
         tasks.emplace_back([&ig]() { ig.draw_rect_die(3, 2, prop); });
+
+        for (double x{0.1}; x < 0.9; x += 0.1) {
+            tasks.emplace_back([&ig, x]() { ig.draw_square(x); });
+        }
     }
 
     oneapi::tbb::parallel_for(std::size_t{0}, tasks.size(), [&](std::size_t i) { tasks[i](); });
