@@ -12,6 +12,7 @@ function(define_msvc_settings)
       -wd4710
       -wd4711
       -wd5045
+      -wd4189 # Unused variables
       /WX
   )
 
