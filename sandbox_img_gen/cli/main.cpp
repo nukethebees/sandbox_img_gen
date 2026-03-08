@@ -177,7 +177,7 @@ int main(int /*argc*/, char** argv) {
         tasks.emplace_back([&ig]() { ig.draw_x_die(3u, 3u, prop); });
         tasks.emplace_back([&ig]() { ig.draw_rect_die(3, 2, prop); });
 
-        for (double x{0.1}; x < 0.9; x += 0.1) {
+        for (double x{0.1}; x < 1.0; x += 0.1) {
             tasks.emplace_back([&ig, x]() { ig.draw_square(x); });
         }
     }
