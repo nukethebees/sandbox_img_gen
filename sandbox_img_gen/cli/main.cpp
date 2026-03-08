@@ -21,6 +21,14 @@ namespace mgk = Magick;
 namespace sbx {
 namespace fs = std::filesystem;
 
+void dots_to_p(std::string& str) {
+    for (char& c : str) {
+        if (c == '.') {
+            c = 'p';
+        }
+    }
+}
+
 class ImgGenerator {
   public:
     ImgGenerator() = delete;
@@ -30,11 +38,17 @@ class ImgGenerator {
         , circle_drawer_{static_cast<double>(width_), static_cast<double>(height_)} {}
 
     void create_directories() {
-        constexpr std::array<std::string_view, 3> dirs{squares_dir, dice_dir, misc_dir};
+        constexpr std::array<std::string_view, 4> dirs{
+            squares_dir,
+            dice_dir,
+            misc_dir,
+            niagara_dir,
+        };
         for (auto const dir : dirs) {
             fs::create_directories(std::format("{}/{}", output_dir, dir));
         }
     }
+    auto geometry() const { return mgk::Geometry(width_, height_); }
     void write(Magick::Image& image, std::string_view name) const {
         auto const file_name{std::format("{}/{}_{}x{}.png", output_dir, name, width_, height_)};
         image.write(file_name);
@@ -51,6 +65,8 @@ class ImgGenerator {
         mgk::ColorRGB const colour{1.f, 1.f, 1.f, 1.f};
         return blank_image(colour);
     }
+    auto wd() const { return static_cast<double>(width_); }
+    auto hd() const { return static_cast<double>(height_); }
 
     // Shapes
     void draw_circle() const {
@@ -130,11 +146,66 @@ class ImgGenerator {
         image.draw(draw_list);
 
         auto name{std::format("{}/square_{:.2f}", squares_dir, rel_size)};
-        for (char& c : name) {
-            if (c == '.') {
-                c = 'p';
-            }
-        }
+        dots_to_p(name);
+        write(image, name);
+    }
+    void draw_ring(double rel_size, double rel_thickness) {
+        mgk::ColorRGB const bg{"transparent"};
+        auto image{blank_image(bg)};
+
+        auto const og{mgk::Geometry(width_, height_)};
+        auto const red{mgk::Color("red")};
+
+        auto const outer_circle{circle_drawer_.draw_centre(rel_size)};
+        auto const inner_circle{circle_drawer_.draw_centre(rel_size - rel_thickness)};
+
+        mgk::DrawableList draw_list;
+        draw_list.push_back(mgk::DrawableStrokeColor("none"));
+        draw_list.push_back(mgk::DrawableFillColor("red"));
+        draw_list.push_back(outer_circle);
+        image.draw(draw_list);
+
+        auto inner_image{blank_image(bg)};
+        inner_image.strokeColor("none");
+        inner_image.fillColor("red");
+        inner_image.draw(inner_circle);
+
+        image.composite(inner_image, 0, 0, mgk::DstOutCompositeOp);
+
+        auto name{std::format("{}/ring{:.2f}_{:.2f}", misc_dir, rel_size, rel_thickness)};
+        dots_to_p(name);
+        write(image, name);
+    }
+    void draw_shockwave_donut(double rel_size, double rel_stroke_thickness) {
+        using namespace Magick;
+
+        auto const transparent{mgk::ColorRGB("transparent")};
+        auto const g{geometry()};
+        auto image{blank_image(transparent)};
+
+        auto const stroke_thickness(wd() * rel_stroke_thickness);
+
+        Image circle_layer{g, transparent};
+
+        circle_layer.strokeColor("red");
+        circle_layer.strokeWidth(stroke_thickness);
+        circle_layer.fillColor("transparent");
+
+        std::vector<Drawable> draw_list;
+        auto const half_stroke{rel_stroke_thickness / (2.0 + 0.2)}; // Add some extra for blurring
+        auto const circle{circle_drawer_.draw_centre(rel_size - rel_stroke_thickness / 2.0)};
+        circle_layer.draw(circle);
+
+        auto const base_width{500.0};
+        auto const base_sigma{20.0};
+        auto const scale_factor{wd() / base_width};
+        auto const dynamic_sigma{base_sigma * scale_factor};
+        circle_layer.gaussianBlur(0, dynamic_sigma);
+
+        image.composite(circle_layer, 0, 0, OverCompositeOp);
+
+        auto name{std::format(
+            "{}/donut_shockwave_{:.2f}_{:.2f}", niagara_dir, rel_size, rel_stroke_thickness)};
         write(image, name);
     }
   private:
@@ -146,6 +217,7 @@ class ImgGenerator {
     inline static constexpr std::string_view misc_dir{"misc"};
     inline static constexpr std::string_view squares_dir{"squares"};
     inline static constexpr std::string_view dice_dir{"dice"};
+    inline static constexpr std::string_view niagara_dir{"niagara"};
 };
 }
 
@@ -153,7 +225,18 @@ int main(int /*argc*/, char** argv) {
     mgk::MagickPlusPlusGenesis genesis{*argv};
 
     constexpr double prop{0.05};
-    constexpr std::array<std::size_t, 10> dims{{16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192}};
+    constexpr std::array<std::size_t, 10> dims{{
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+    }};
 
     sbx::StaticPmrVector<sbx::ImgGenerator, dims.size()> igs_vec;
     auto& igs{igs_vec.vec};
@@ -168,22 +251,39 @@ int main(int /*argc*/, char** argv) {
     tasks.reserve(300);
 
     for (std::size_t i{0}; i < dims.size(); ++i) {
+        auto const dim{dims[i]};
+        if (dim >= 2000) {
+            break;
+        }
+
         auto& ig{igs[i]};
+#if 0
         tasks.emplace_back([&ig]() { ig.draw_circle(); });
         tasks.emplace_back([&ig]() { ig.draw_grid(); });
+#endif
+
+#if 0
         tasks.emplace_back([&ig]() { ig.draw_rect_die(1, 1, prop); });
         tasks.emplace_back([&ig]() { ig.draw_x_die(0u, 2u, prop); });
         tasks.emplace_back([&ig]() { ig.draw_x_die(3u, 0u, prop); });
         tasks.emplace_back([&ig]() { ig.draw_rect_die(2, 2, prop); });
         tasks.emplace_back([&ig]() { ig.draw_x_die(3u, 3u, prop); });
         tasks.emplace_back([&ig]() { ig.draw_rect_die(3, 2, prop); });
+#endif
 
+#if 0
         for (double x{0.1}; x < 1.0; x += 0.1) {
             tasks.emplace_back([&ig, x]() { ig.draw_square(x); });
         }
+#endif
+
+        constexpr double ring_size{0.5};
+        for (double x{0.05}; x < 0.25; x += 0.05) {
+            tasks.emplace_back([&ig, x]() { ig.draw_shockwave_donut(ring_size, x); });
+        }
+        tasks.emplace_back([&ig]() { ig.draw_ring(0.5, 0.1); });
     }
 
     oneapi::tbb::parallel_for(std::size_t{0}, tasks.size(), [&](std::size_t i) { tasks[i](); });
-
     return 0;
 }
