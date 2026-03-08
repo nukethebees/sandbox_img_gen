@@ -35,7 +35,10 @@ class ImgGenerator {
             fs::create_directories(std::format("{}/{}", output_dir, dir));
         }
     }
-
+    void write(Magick::Image& image, std::string_view name) const {
+        auto const file_name{std::format("{}/{}_{}x{}.png", output_dir, name, width_, height_)};
+        image.write(file_name);
+    }
     auto blank_image(mgk::ColorRGB colour) const {
         constexpr std::int64_t offset{0};
 
@@ -48,6 +51,8 @@ class ImgGenerator {
         mgk::ColorRGB const colour{1.f, 1.f, 1.f, 1.f};
         return blank_image(colour);
     }
+
+    // Shapes
     void draw_circle() const {
         auto image{blank_image()};
 
@@ -131,10 +136,6 @@ class ImgGenerator {
             }
         }
         write(image, name);
-    }
-    void write(Magick::Image& image, std::string_view name) const {
-        auto const file_name{std::format("{}/{}_{}x{}.png", output_dir, name, width_, height_)};
-        image.write(file_name);
     }
   private:
     std::size_t width_{0u};
